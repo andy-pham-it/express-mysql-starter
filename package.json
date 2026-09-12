@@ -1,0 +1,32 @@
+{
+  "name": "express-mysql-starter",
+  "version": "1.0.0",
+  "description": "Express.js + MySQL 8.0 + GraphQL demo for MERN JD (Intellipro) — REST CRUD, stored procedures, EXPLAIN optimization",
+  "main": "dist/app.js",
+  "scripts": {
+    "dev": "tsx watch src/app.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/app.js",
+    "db:migrate": "mysql -h 127.0.0.1 -u demo -pdemopass demo < src/db/schema.sql && mysql -h 127.0.0.1 -u demo -pdemopass demo < src/db/procedures.sql && mysql -h 127.0.0.1 -u demo -pdemopass demo < src/db/002_add_indexes.sql",
+    "db:seed": "mysql -h 127.0.0.1 -u demo -pdemopass demo < src/db/seed.sql"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@apollo/server": "^4.10.0",
+    "dataloader": "^2.2.2",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "graphql": "^16.8.1",
+    "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.9.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9.0.6",
+    "@types/node": "^20.12.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.4.0"
+  }
+}
