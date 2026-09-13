@@ -27,4 +27,20 @@ BEGIN
   GROUP BY u.id, u.name;
 END //
 
+DELIMITER //
+
+DROP PROCEDURE IF EXISTS sp_product_revenue //
+CREATE PROCEDURE sp_product_revenue(IN p_productId INT)
+BEGIN
+  SELECT
+    p.id AS product_id,
+    p.name AS product_name,
+    COALESCE(SUM(oi.qty), 0) AS total_qty,
+    COALESCE(SUM(oi.qty * oi.unit_price), 0) AS revenue
+  FROM products p
+  LEFT JOIN order_items oi ON oi.product_id = p.id
+  WHERE p.id = p_productId
+  GROUP BY p.id, p.name;
+END //
+
 DELIMITER ;

@@ -2,7 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import { ApolloServer } from "@apollo/server";
 import { expressMiddleware } from "@apollo/server/express4";
-import { typeDefs, resolvers, createUserLoader } from "./graphql/schema";
+import { typeDefs, resolvers, createUserLoader, createItemLoader, createProductLoader } from "./graphql/schema";
 import { ordersRouter } from "./orders";
 import { authMiddleware, loginHandler } from "./auth";
 
@@ -24,7 +24,11 @@ async function start() {
   app.use(
     "/graphql",
     expressMiddleware(server, {
-      context: async () => ({ userLoader: createUserLoader() }),
+      context: async () => ({
+        userLoader: createUserLoader(),
+        itemLoader: createItemLoader(),
+        productLoader: createProductLoader(),
+      }),
     })
   );
 

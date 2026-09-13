@@ -50,3 +50,43 @@ only 5 rows. Complexity drops to O(log n + limit).
 > "My order feed did a filesort on every page. I added a composite index on
 > (user_id, created_at), EXPLAIN confirmed the Sort step disappeared, and the
 > query now reads only the LIMIT rows via backward index scan."
+
+## Case 2 — covering index for the revenue GROUP BY
+
+Query under test (`sp_product_revenue`):
+
+```sql
+SELECT p.id, SUM(oi.qty * oi.unit_price) FROM products p
+LEFT JOIN order_items oi ON oi.product_id = p.id
+WHERE p.id = 1 GROUP BY p.id;
+```
+
+Dataset: 20 products, 120 order_items. Migrations: `003_add_products.sql` (tables), `004_add_item_indexes.sql` (index).
+
+### Before — only the FK auto-index `fk_items_product (product_id)`
+
+```
+id  table  type   key                 rows  Extra
+1   oi     ref    fk_items_product    6     NULL
+```
+
+MySQL finds the 6 rows via the FK index but must read `qty`/`unit_price`
+from the table heap (no `Extra` flag = table lookups).
+
+### After — covering index `idx_items_product_cover (product_id, qty, unit_price)`
+
+```sql
+CREATE INDEX idx_items_product_cover ON order_items (product_id, qty, unit_price);
+```
+
+```
+id  table  type   key                        rows  Extra
+1   oi     ref    idx_items_product_cover    6     Using index
+```
+
+`Using index` = index-only scan: the SUM is answered from the index without
+touching the table. Same pattern as case 1 — design the index to cover the
+query, confirm with EXPLAIN.
+
+- `sp_product_revenue(p_productId)` — revenue/qty per product in one round trip.
+  Verify: `CALL sp_product_revenue(1);` → `total_qty=6, revenue=75.00`.

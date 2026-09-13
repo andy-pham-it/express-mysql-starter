@@ -1,13 +1,13 @@
 {
   "name": "express-mysql-starter",
   "version": "1.0.0",
-  "description": "Express.js + MySQL 8.0 + GraphQL demo for MERN JD (Intellipro) — REST CRUD, stored procedures, EXPLAIN optimization",
+  "description": "Express.js + MySQL 8.0 + GraphQL demo for MERN JD (Intellipro) \u2014 REST CRUD, stored procedures, EXPLAIN optimization, products/order_items catalog",
   "main": "dist/app.js",
   "scripts": {
     "dev": "tsx watch src/app.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/app.js",
-    "db:migrate": "mysql -h 127.0.0.1 -u demo -pdemopass demo < src/db/schema.sql && mysql -h 127.0.0.1 -u demo -pdemopass demo < src/db/procedures.sql && mysql -h 127.0.0.1 -u demo -pdemopass demo < src/db/002_add_indexes.sql",
+    "db:migrate": "mysql -h 127.0.0.1 -u demo -pdemopass demo < src/db/schema.sql && mysql -h 127.0.0.1 -u demo -pdemopass demo < src/db/procedures.sql && mysql -h 127.0.0.1 -u demo -pdemopass demo < src/db/002_add_indexes.sql && mysql -h 127.0.0.1 -u demo -pdemopass demo < src/db/003_add_products.sql && mysql -h 127.0.0.1 -u demo -pdemopass demo < src/db/004_add_item_indexes.sql",
     "db:seed": "mysql -h 127.0.0.1 -u demo -pdemopass demo < src/db/seed.sql"
   },
   "engines": {
