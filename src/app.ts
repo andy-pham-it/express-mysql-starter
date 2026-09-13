@@ -28,6 +28,23 @@ async function start() {
     })
   );
 
+  app.use((req, res) => {
+    res.status(404).json({ error: `Not found: ${req.method} ${req.path}` });
+  });
+
+  app.use(
+  (
+    err: unknown,
+    _req: express.Request,
+    res: express.Response,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _next: express.NextFunction
+  ) => {
+    console.error("Unhandled error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+);
+
   const PORT = Number(process.env.PORT ?? 3001);
   app.listen(PORT, () => {
     console.log(`API listening on http://localhost:${PORT}`);

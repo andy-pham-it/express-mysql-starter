@@ -6,11 +6,10 @@ Express.js + MySQL 8.0 + GraphQL demo built for a MERN JD (stored procedures + q
 
 ```bash
 cp .env.example .env
-docker compose up -d                                    # MySQL 8.0 on :3307
-docker cp src/db/schema.sql express-mysql-demo:/tmp/ && ...
-# or with a local mysql client:
-npm run db:migrate && npm run db:seed
-npm install && npm run dev                               # API on :3001
+docker compose up -d                  # MySQL 8.0 on :3307
+npm install
+npm run db:migrate && npm run db:seed # needs mysql client installed
+npm run dev                           # API on :3001
 ```
 
 ## What it proves
