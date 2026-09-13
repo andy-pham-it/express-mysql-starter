@@ -10,6 +10,15 @@ INSERT INTO users (name, email) VALUES ('User 8', 'user8@demo.test') ON DUPLICAT
 INSERT INTO users (name, email) VALUES ('User 9', 'user9@demo.test') ON DUPLICATE KEY UPDATE name=VALUES(name);
 INSERT INTO users (name, email) VALUES ('User 10', 'user10@demo.test') ON DUPLICATE KEY UPDATE name=VALUES(name);
 
+-- Reruns stay deterministic: wipe child rows first (users/products use INSERT IGNORE).
+-- (DELETE + AUTO_INCREMENT reset instead of TRUNCATE, so a least-privilege user can reseed.)
+DELETE FROM order_items;
+DELETE FROM orders;
+DELETE FROM products;
+ALTER TABLE orders AUTO_INCREMENT = 1;
+ALTER TABLE order_items AUTO_INCREMENT = 1;
+ALTER TABLE products AUTO_INCREMENT = 1;
+
 INSERT INTO orders (user_id, total, status) VALUES (1, 187.00, 'paid');
 INSERT INTO orders (user_id, total, status) VALUES (2, 324.00, 'shipped');
 INSERT INTO orders (user_id, total, status) VALUES (3, 461.00, 'cancelled');

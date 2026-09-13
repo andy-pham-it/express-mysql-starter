@@ -27,7 +27,6 @@ BEGIN
   GROUP BY u.id, u.name;
 END //
 
-DELIMITER //
 
 DROP PROCEDURE IF EXISTS sp_product_revenue //
 CREATE PROCEDURE sp_product_revenue(IN p_productId INT)

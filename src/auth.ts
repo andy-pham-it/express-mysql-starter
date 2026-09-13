@@ -18,7 +18,7 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
   }
 }
 
-// Demo login — accepts any username, returns a signed token for Postman testing.
+// Demo login: accepts any username, returns a signed token for Postman testing.
 export function loginHandler(req: Request, res: Response) {
   const { username } = req.body ?? {};
   if (!username) return res.status(400).json({ error: "username required" });

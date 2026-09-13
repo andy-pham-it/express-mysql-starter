@@ -1,7 +1,7 @@
 {
   "name": "express-mysql-starter",
   "version": "1.0.0",
-  "description": "Express.js + MySQL 8.0 + GraphQL demo for MERN JD (Intellipro) — REST CRUD, stored procedures, EXPLAIN optimization, products/order_items catalog",
+  "description": "Express.js + MySQL 8.0 + GraphQL demo: REST CRUD, stored procedures, EXPLAIN optimization, products/order_items catalog",
   "main": "dist/app.js",
   "scripts": {
     "dev": "tsx watch src/app.ts",

@@ -1,6 +1,6 @@
-# MySQL Optimization — EXPLAIN before/after composite index
+# MySQL Optimization: EXPLAIN before/after composite index
 
-Query under test (Todo 6 baseline → Todo 7 optimized):
+Query under test (baseline first, optimized after the new index):
 
 ```sql
 SELECT * FROM orders WHERE user_id = 1 ORDER BY created_at DESC LIMIT 5;
@@ -8,7 +8,7 @@ SELECT * FROM orders WHERE user_id = 1 ORDER BY created_at DESC LIMIT 5;
 
 Dataset: 120 rows in `orders`, 10 users. MySQL 8.0 (Docker).
 
-## Before — only single-column index `idx_orders_user (user_id)`
+## Before: only single-column index `idx_orders_user (user_id)`
 
 ```
 -> Limit: 5 row(s)
@@ -18,9 +18,9 @@ Dataset: 120 rows in `orders`, 10 users. MySQL 8.0 (Docker).
 
 Problem: the single-column index finds the 12 rows for the user, but MySQL must
 **sort them by `created_at`** (filesort) before applying LIMIT. Cost grows with
-rows-per-user — O(n log n) sort on every page load.
+rows-per-user: O(n log n) sort on every page load.
 
-## After — composite index `idx_orders_user_created (user_id, created_at)`
+## After: composite index `idx_orders_user_created (user_id, created_at)`
 
 Migration: `src/db/002_add_indexes.sql`
 
@@ -39,9 +39,9 @@ only 5 rows. Complexity drops to O(log n + limit).
 
 ## Stored procedures
 
-- `sp_paginated_orders(p_page, p_limit)` — paginated order feed with user join.
+- `sp_paginated_orders(p_page, p_limit)`: paginated order feed with user join.
   Verify: `CALL sp_paginated_orders(1, 5);` → 5 rows.
-- `sp_user_order_stats(p_userId)` — per-user count/sum/avg in one round trip.
+- `sp_user_order_stats(p_userId)`: per-user count/sum/avg in one round trip.
   Verify: `CALL sp_user_order_stats(1);` → `order_count=12, total_spent=6264.00`.
 - Inspect: `SHOW CREATE PROCEDURE sp_paginated_orders;`
 
@@ -51,7 +51,7 @@ only 5 rows. Complexity drops to O(log n + limit).
 > (user_id, created_at), EXPLAIN confirmed the Sort step disappeared, and the
 > query now reads only the LIMIT rows via backward index scan."
 
-## Case 2 — covering index for the revenue GROUP BY
+## Case 2: covering index for the revenue GROUP BY
 
 Query under test (`sp_product_revenue`):
 
@@ -63,7 +63,7 @@ WHERE p.id = 1 GROUP BY p.id;
 
 Dataset: 20 products, 120 order_items. Migrations: `003_add_products.sql` (tables), `004_add_item_indexes.sql` (index).
 
-### Before — only the FK auto-index `fk_items_product (product_id)`
+### Before: only the FK auto-index `fk_items_product (product_id)`
 
 ```
 id  table  type   key                 rows  Extra
@@ -73,7 +73,7 @@ id  table  type   key                 rows  Extra
 MySQL finds the 6 rows via the FK index but must read `qty`/`unit_price`
 from the table heap (no `Extra` flag = table lookups).
 
-### After — covering index `idx_items_product_cover (product_id, qty, unit_price)`
+### After: covering index `idx_items_product_cover (product_id, qty, unit_price)`
 
 ```sql
 CREATE INDEX idx_items_product_cover ON order_items (product_id, qty, unit_price);
@@ -85,8 +85,8 @@ id  table  type   key                        rows  Extra
 ```
 
 `Using index` = index-only scan: the SUM is answered from the index without
-touching the table. Same pattern as case 1 — design the index to cover the
+touching the table. Same pattern as case 1: design the index to cover the
 query, confirm with EXPLAIN.
 
-- `sp_product_revenue(p_productId)` — revenue/qty per product in one round trip.
+- `sp_product_revenue(p_productId)`: revenue/qty per product in one round trip.
   Verify: `CALL sp_product_revenue(1);` → `total_qty=6, revenue=75.00`.

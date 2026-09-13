@@ -15,6 +15,7 @@ export const typeDefs = `#graphql
     status: String!
     createdAt: String!
     user: User
+    items: [OrderItem!]!
   }
 
   type UserOrderStats {
@@ -52,27 +53,23 @@ export const typeDefs = `#graphql
     userOrderStats(userId: ID!): UserOrderStats
     productRevenue(productId: ID!): ProductRevenue
   }
-
-  type Order {
-    items: [OrderItem!]!
-  }
 `;
 
-// DataLoader batches nested user lookups → avoids N+1 (one query per set of user_ids).
+// One batched query covers a whole set of keys, so nested fields never cause N+1.
 export function createItemLoader() {
   return new DataLoader<number, any[]>(async (orderIds) => {
     const [rows]: any = await pool.query(
-      `SELECT oi.order_id, oi.order_id AS orderId, oi.product_id, oi.product_id AS productId,
-              oi.qty, oi.unit_price, oi.unit_price AS unitPrice, p.name AS product_name
+      `SELECT oi.order_id AS orderId, oi.product_id AS productId,
+              oi.qty, oi.unit_price AS unitPrice, p.name AS product_name
        FROM order_items oi JOIN products p ON p.id = oi.product_id
        WHERE oi.order_id IN (?)`,
       [Array.from(new Set(orderIds))]
     );
     const byOrder = new Map<number, any[]>();
     for (const r of rows) {
-      const list = byOrder.get(r.order_id) ?? [];
+      const list = byOrder.get(r.orderId) ?? [];
       list.push(r);
-      byOrder.set(r.order_id, list);
+      byOrder.set(r.orderId, list);
     }
     return orderIds.map((id) => byOrder.get(id) ?? []);
   });
@@ -151,6 +148,6 @@ export const resolvers = {
   },
   OrderItem: {
     product: (parent: any, _: any, ctx: { productLoader: ReturnType<typeof createProductLoader> }) =>
-      ctx.productLoader.load(Number(parent.product_id)),
+      ctx.productLoader.load(Number(parent.productId ?? parent.product_id)),
   },
 };

@@ -28,7 +28,7 @@ npm run dev                           # API on :3001
 ## Why no ORM?
 
 Deliberate choice, not a gap. This repo exists to demonstrate **stored procedures,
-`EXPLAIN ANALYZE` optimization and hand-tuned indexes** — an ORM would hide exactly
+`EXPLAIN ANALYZE` optimization and hand-tuned indexes**. An ORM would hide exactly
 the layer being showcased. Raw `mysql2` keeps every query visible and auditable.
 For a production app of this shape I would reach for **Drizzle**: lightweight,
 SQL-like, no hidden queries.
@@ -44,3 +44,8 @@ curl -X POST localhost:3001/graphql -H 'Content-Type: application/json' -d '{"qu
 curl "localhost:3001/api/orders/1"   # order detail with nested items
 curl -X POST localhost:3001/graphql -H 'Content-Type: application/json' -d '{"query":"{ order(id:1){ id total items { qty unitPrice product { name price } } } productRevenue(productId:1){ productName totalQty revenue } }"}'
 ```
+
+## Auth scope
+
+Reads (`GET /api/orders`, the GraphQL endpoint) are public so the demo is easy to
+try. Writes (`POST`/`PUT`/`DELETE /api/orders`) need a Bearer token from `/api/login`.

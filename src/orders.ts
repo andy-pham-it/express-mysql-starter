@@ -4,6 +4,17 @@ import { pool } from "./db/pool";
 
 export const ordersRouter = Router();
 
+const ORDER_STATUS = ["pending", "paid", "shipped", "cancelled"] as const;
+
+function invalidTotal(total: unknown) {
+  return typeof total !== "number" || !Number.isFinite(total) || total <= 0;
+}
+
+function invalidStatus(status: unknown) {
+  return status !== undefined && !ORDER_STATUS.includes(status as (typeof ORDER_STATUS)[number]);
+}
+
+
 function parsePaging(req: Request) {
   const page = Math.max(1, Number(req.query.page ?? 1) || 1);
   const limit = Math.min(100, Math.max(1, Number(req.query.limit ?? 10) || 10));
@@ -42,6 +53,12 @@ ordersRouter.post("/", ah(async (req: Request, res: Response) => {
   if (!userId || total == null) {
     return res.status(400).json({ error: "userId and total are required" });
   }
+  if (invalidTotal(total)) {
+    return res.status(400).json({ error: "total must be a number above 0" });
+  }
+  if (invalidStatus(status)) {
+    return res.status(400).json({ error: `status must be one of: ${ORDER_STATUS.join(", ")}` });
+  }
   if (items !== undefined && !Array.isArray(items)) {
     return res.status(400).json({ error: "items must be an array" });
   }
@@ -60,6 +77,10 @@ ordersRouter.post("/", ah(async (req: Request, res: Response) => {
     const orderId = result.insertId;
     if (items?.length) {
       for (const it of items) {
+        if (!it?.productId || !Number.isInteger(it.qty ?? 1) || (it.qty ?? 1) <= 0) {
+          await conn.rollback();
+          return res.status(400).json({ error: "each item needs productId and qty (positive integer)" });
+        }
         const [prod]: any = await conn.query(`SELECT price FROM products WHERE id = ?`, [it.productId]);
         if (!prod.length) {
           await conn.rollback();
@@ -73,7 +94,7 @@ ordersRouter.post("/", ah(async (req: Request, res: Response) => {
     }
     await conn.commit();
     res.status(201).json({ id: orderId, userId, total, status: status ?? "pending", itemCount: items?.length ?? 0 });
-  } catch (err) {
+  } catch {
     await conn.rollback();
     res.status(500).json({ error: "Failed to create order" });
   } finally {
@@ -83,6 +104,12 @@ ordersRouter.post("/", ah(async (req: Request, res: Response) => {
 
 ordersRouter.put("/:id", ah(async (req: Request, res: Response) => {
   const { total, status } = req.body ?? {};
+  if (total !== undefined && invalidTotal(total)) {
+    return res.status(400).json({ error: "total must be a number above 0" });
+  }
+  if (invalidStatus(status)) {
+    return res.status(400).json({ error: `status must be one of: ${ORDER_STATUS.join(", ")}` });
+  }
   const [result]: any = await pool.query(
     `UPDATE orders SET total = COALESCE(?, total), status = COALESCE(?, status) WHERE id = ?`,
     [total ?? null, status ?? null, req.params.id]
