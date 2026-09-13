@@ -4,6 +4,8 @@ Express.js + MySQL 8.0 + GraphQL demo built for a MERN JD (stored procedures + q
 
 ## Quickstart
 
+> Requires **Node.js 22+** (LTS) and Docker.
+
 ```bash
 cp .env.example .env
 docker compose up -d                  # MySQL 8.0 on :3307
@@ -22,6 +24,14 @@ npm run dev                           # API on :3001
 | Transactions | `POST /api/orders` (BEGIN/COMMIT/ROLLBACK, incl. items[]) |
 | GraphQL + N+1 fix | `src/graphql/schema.ts` (Apollo 4 + user/item/product DataLoaders, 2-level nesting) |
 | Catalog (many-to-many) | `src/db/003_add_products.sql` (`products` + `order_items` junction) |
+
+## Why no ORM?
+
+Deliberate choice, not a gap. This repo exists to demonstrate **stored procedures,
+`EXPLAIN ANALYZE` optimization and hand-tuned indexes** — an ORM would hide exactly
+the layer being showcased. Raw `mysql2` keeps every query visible and auditable.
+For a production app of this shape I would reach for **Drizzle**: lightweight,
+SQL-like, no hidden queries.
 
 ## Try it
 
